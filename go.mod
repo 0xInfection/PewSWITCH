@@ -1,3 +1,3 @@
-module sippew
+module pewswitch
 
 go 1.17

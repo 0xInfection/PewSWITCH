@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
+	"fmt"
 	"log"
 	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -85,4 +88,66 @@ func sendPacket(hostport string, payload string, deadline int, termConn bool) (n
 		}
 	}
 	return conn, nil
+}
+
+func getExtensionsFromFile(fname string) *[]string {
+	var exts []string
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		exts = append(exts, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatalln(err.Error())
+	}
+	return &exts
+}
+
+func checkAlive(targets *[]string) map[string]bool {
+	var dmap = make(map[string]bool)
+	for _, targ := range *targets {
+		dmap[targ] = false
+		conn, err := net.DialTimeout("udp", targ, time.Duration(dialTimeout)*time.Second)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+		defer conn.Close()
+
+		var payload string
+		payload += fmt.Sprintf("OPTIONS sip:1000@%s;transport=UDP SIP/2.0\r\n", targ)
+		payload += fmt.Sprintf("Via: SIP/2.0/UDP %s;branch=z9hG4bK001b84f6;rport\r\n", conn.LocalAddr().String())
+		payload += "Max-Forwards: 70\r\n"
+		payload += "To: \"PewSWITCH\" <sip:1000@1.1.1.1>\r\n"
+		payload += "From: \"PewSWITCH\" <sip:1000@1.1.1.1>;tag=61633638380343437\r\n"
+		payload += "User-Agent: pewswitch\r\n"
+		payload += "Call-ID: AABkh3bjAZ3k2j3br5920I0\r\n"
+		payload += fmt.Sprintf("Contact: sip:1000@%s\r\n", conn.LocalAddr().String())
+		payload += "CSeq: 1 OPTIONS\r\n"
+		payload += "Accept: application/sdp\r\n"
+		payload += "Content-Length: 0\r\n"
+		payload += "\r\n"
+
+		conn.SetDeadline(time.Now().Add(5 * time.Second))
+		_, err = conn.Write([]byte(payload))
+		if err != nil {
+			continue
+		}
+		xbuf := make([]byte, 64)
+		_, err = conn.Read(xbuf)
+		if err != nil {
+			continue
+		}
+		if strings.HasPrefix(string(xbuf), "SIP/2.0") {
+			dmap[targ] = true
+			log.Printf("Host %s is up.", targ)
+		}
+	}
+	return dmap
 }
