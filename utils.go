@@ -3,11 +3,14 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -90,7 +93,7 @@ func sendPacket(hostport string, payload string, deadline int, termConn bool) (n
 	return conn, nil
 }
 
-func getExtensionsFromFile(fname string) *[]string {
+func readExtensionsFromFile(fname string) *[]string {
 	var exts []string
 	file, err := os.Open(fname)
 	if err != nil {
@@ -107,6 +110,22 @@ func getExtensionsFromFile(fname string) *[]string {
 		log.Fatalln(err.Error())
 	}
 	return &exts
+}
+
+func readCsvFile(filePath string) [][]string {
+	f, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal("Unable to read input file "+filePath, err)
+	}
+	defer f.Close()
+
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		log.Fatal("Unable to parse file as CSV for "+filePath, err)
+	}
+
+	return records
 }
 
 func checkAlive(targets *[]string) map[string]bool {
@@ -150,4 +169,20 @@ func checkAlive(targets *[]string) map[string]bool {
 		}
 	}
 	return dmap
+}
+
+// writeToJSON writes the results of a scan to the specified directory
+func writeToJSON(obj *[]fResult) error {
+	log.Println("Writing results to destination directory...")
+	for _, res := range *obj {
+		xdata, err := json.MarshalIndent(res, "", "  ")
+		if err != nil {
+			return err
+		}
+		if err = ioutil.WriteFile(path.Join(outdir,
+			fmt.Sprintf("%s-results.json", res.Host)), xdata, 0666); err != nil {
+			return err
+		}
+	}
+	return nil
 }

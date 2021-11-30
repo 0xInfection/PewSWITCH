@@ -7,24 +7,20 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
 )
 
 func processHost(host string) {
-	xwr, err := initWriter(path.Join(outdir, fmt.Sprintf("%s.csv", host)))
-	if err != nil {
-		log.Println("Can't initiate results writer:", err.Error())
-		return
-	}
-	xwr.writeRow([]string{"cve_id", ""})
+	var pResult fResult
 	for vuln, runner := range vulnToModule {
 		if isItemIn(vuln, &allvulns) {
-			runner.(func(string, *csvWriter))(host, xwr)
+			runner.(func(string, *fResult))(host, &pResult)
 		}
 	}
+	pResult.Host = strings.Split(strings.Split(host, "@")[1], ":")[0]
+	finalResults = append(finalResults, pResult)
 }
 
 func initScan(allhosts, allexts *[]string) {
@@ -34,6 +30,7 @@ func initScan(allhosts, allexts *[]string) {
 	xmap := checkAlive(allhosts)
 	for target, alive := range xmap {
 		if alive {
+			log.Println("Good host:", target)
 			alivehosts = append(alivehosts, target)
 		} else {
 			log.Printf("Looks like %s is down / not responding to SIP.", target)
@@ -44,11 +41,13 @@ func initScan(allhosts, allexts *[]string) {
 	maxProcs := new(sync.WaitGroup)
 	maxProcs.Add(maxConcurrent)
 
-	log.Println("Creating output directory...")
+	cwd, _ := os.Getwd()
+	log.Printf("Creating output directory %s under %s...", outdir, cwd)
 	_, err := os.Stat(outdir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if err = os.Mkdir(outdir, os.ModeDir); err != nil {
+			log.Println("Output directory doesn't exist. Creating one...")
+			if err = os.Mkdir(outdir, 0777); err != nil {
 				log.Fatalln(err.Error())
 			}
 		}
@@ -71,13 +70,16 @@ func initScan(allhosts, allexts *[]string) {
 
 	for _, xhost := range alivehosts {
 		for _, ext := range *allexts {
-			mhost := fmt.Sprintf("%s@%s", ext, xhost)
-			hosts <- mhost
+			hosts <- fmt.Sprintf("%s@%s", ext, xhost)
 		}
 	}
 
 	close(hosts)
 	maxProcs.Wait()
+
+	if err = writeToJSON(&finalResults); err != nil {
+		log.Panicln(err)
+	}
 
 	log.Println("Scan finished at:", time.Now().String())
 	log.Printf("Total %d hosts scanned in %s.", len(*allhosts), time.Since(startTime).String())
@@ -89,9 +91,9 @@ func main() {
 	flag.StringVar(&userAgent, "ua", fmt.Sprintf("pewswitch/%s", version), "Custom user-agent string to use.")
 	flag.StringVar(&cveToScan, "cve", "", "Scan for a specific vuln rather than both.")
 	flag.StringVar(&extensions, "exts", "1005", "Comma separated list of extensions to scan.")
-	flag.StringVar(&extFile, "ext-file", "", "Specify a file containing extensions instead of '-exts'")
-	//flag.StringVar(&rport, "rport", "5060", "Destination port to use for the targets.")
-	flag.StringVar(&outdir, "output", "./pewswitch/", "Output directory to write the results to.")
+	flag.StringVar(&extFile, "ext-file", "", "Specify a file containing extensions instead of '-exts'.")
+	flag.StringVar(&sendmsgs, "msg-file", "", "Specify a CSV file containing messages to be sent (if found vulnerable to CVE-2021-37624).")
+	flag.StringVar(&outdir, "output", "./pewswitch-results/", "Output directory to write the results to.")
 	flag.BoolVar(&randomScan, "random-scan", false, "Here we go pew pew pew.")
 	flag.Parse()
 
@@ -117,6 +119,7 @@ func main() {
 			targets[x] = fmt.Sprintf("%s:5060", targets[x])
 		}
 	}
+	// just letting the user know we're defaulting to 5060.
 	if xflag {
 		log.Println("No port supplied, using default port 5060 for targets...")
 	}
@@ -124,7 +127,12 @@ func main() {
 		allexts = append(allexts, strings.TrimSpace(ext))
 	}
 	if len(extFile) > 0 {
-		allexts = append(allexts, *getExtensionsFromFile(extFile)...)
+		allexts = append(allexts, *readExtensionsFromFile(extFile)...)
+	}
+	if len(sendmsgs) > 0 {
+		msgstosend = append(msgstosend, readCsvFile(sendmsgs)...)
+	} else {
+		msgstosend = append(msgstosend, defaultMsgText)
 	}
 	initScan(&targets, &allexts)
 }

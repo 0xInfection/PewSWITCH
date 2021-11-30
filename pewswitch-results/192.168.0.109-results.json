@@ -1,0 +1,21 @@
+{
+  "host": "192.168.0.109",
+  "vulnerability_details": {
+    "CVE202137624": {
+      "is_vulnerable": true,
+      "exploit_details": [
+        {
+          "extension": "1000",
+          "message": [
+            "FBI here. Open your door!"
+          ],
+          "sent_successfully": true
+        }
+      ]
+    },
+    "cve_2021_41157": {
+      "is_vulnerable": false,
+      "exploit_details": null
+    }
+  }
+}
