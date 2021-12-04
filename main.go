@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func processHost(host string) {
+func processHostExt(host string) {
 	var pResult fResult
 	for vuln, runner := range vulnToModule {
 		if isItemIn(vuln, &allvulns) {
@@ -33,7 +33,7 @@ func initScan(allhosts, allexts *[]string) {
 			log.Println("Good host:", target)
 			alivehosts = append(alivehosts, target)
 		} else {
-			log.Printf("Looks like %s is down / not responding to SIP.", target)
+			log.Fatalf("Looks like '%s' is down / not responding to SIP.", target)
 		}
 	}
 
@@ -62,23 +62,40 @@ func initScan(allhosts, allexts *[]string) {
 				if host == "" {
 					break
 				}
-				processHost(host)
+				processHostExt(host)
 			}
 			maxProcs.Done()
 		}()
 	}
 
-	for _, xhost := range alivehosts {
-		for _, ext := range *allexts {
-			hosts <- fmt.Sprintf("%s@%s", ext, xhost)
+	if len(extFile) < 1 {
+		for _, xhost := range alivehosts {
+			for _, ext := range *allexts {
+				hosts <- fmt.Sprintf("%s@%s", ext, xhost)
+			}
+		}
+	} else {
+		for _, host := range *readExtensionsFromFile(extFile) {
+			if !strings.Contains(host, ":") {
+				host = fmt.Sprintf("%s:5060", host)
+			}
+			hosts <- host
 		}
 	}
 
 	close(hosts)
 	maxProcs.Wait()
 
-	if err = writeToJSON(&finalResults); err != nil {
-		log.Panicln(err)
+	if outFormat == "json" {
+		log.Println("Writing results to destination directory as JSON...")
+		if err = writeToJSON(&finalResults); err != nil {
+			log.Panicln(err)
+		}
+	} else if outFormat == "csv" {
+		log.Println("Writing results to destination directory as CSV...")
+		if err = writeToCSV(&finalResults); err != nil {
+			log.Panicln(err)
+		}
 	}
 
 	log.Println("Scan finished at:", time.Now().String())
@@ -87,25 +104,33 @@ func initScan(allhosts, allexts *[]string) {
 
 func main() {
 	flag.IntVar(&delay, "delay", 0, "Delay in seconds between subsequent requests.")
-	flag.IntVar(&maxConcurrent, "threads", 2, "Number of concurrent hosts to process.")
-	flag.StringVar(&userAgent, "ua", fmt.Sprintf("pewswitch/%s", version), "Custom user-agent string to use.")
-	flag.StringVar(&cveToScan, "cve", "", "Scan for a specific vuln rather than both.")
-	flag.StringVar(&extensions, "exts", "1005", "Comma separated list of extensions to scan.")
+	flag.IntVar(&maxConcurrent, "threads", 2, "Number of threads to use while scanning.")
+	flag.IntVar(&maxExpires, "expires", 60, "Maximum value of the 'Expires' header for SUBSCRIBE requests.")
+	flag.StringVar(&monEvents, "events", "", "Comma-separated list of events to be subscribed to. All events are monitored by default.")
+	flag.StringVar(&userAgent, "user-agent", fmt.Sprintf("pewswitch/%s", version), "Custom user-agent string to use.")
+	flag.StringVar(&cveToScan, "cve", "", "Specify a specific CVE to scan. Both vulns are tested by default.")
+	flag.StringVar(&extensions, "exts", "", "Comma separated list of extensions to scan.")
 	flag.StringVar(&extFile, "ext-file", "", "Specify a file containing extensions instead of '-exts'.")
 	flag.StringVar(&sendmsgs, "msg-file", "", "Specify a CSV file containing messages to be sent (if found vulnerable to CVE-2021-37624).")
-	flag.StringVar(&outdir, "output", "./pewswitch-results/", "Output directory to write the results to.")
-	flag.BoolVar(&randomScan, "random-scan", false, "Here we go pew pew pew.")
-	flag.Parse()
+	flag.StringVar(&outdir, "out-dir", "./pewswitch-results/", "Output directory to write the results to.")
+	flag.StringVar(&outFormat, "out-format", "json", "Output format type of the results. Can be either 'json' or 'csv'.")
 
+	mainUsage := func() {
+		fmt.Fprint(os.Stdout, lackofart, "\n\n")
+		fmt.Fprintf(os.Stdout, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+	flag.Usage = mainUsage
+	flag.Parse()
 	fmt.Print(lackofart, "\n\n")
 	targets := flag.Args()
-	if len(targets) < 1 && !randomScan {
+	if (len(targets) < 1 && len(extensions) < 1) || (len(extFile) < 1) {
 		log.Println("You need to supply at least a valid target & extension to scan!\n\nUsage:")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	if len(extensions) < 1 && len(extFile) < 1 {
-		log.Println("You need to supply at least a valid extension to scan! Use '-exts' or '-ext-file'.\n\nUsage:")
+	if outFormat != "json" && outFormat != "csv" {
+		log.Println("The only output formats allowed are json and csv.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -126,13 +151,17 @@ func main() {
 	for _, ext := range strings.Split(extensions, ",") {
 		allexts = append(allexts, strings.TrimSpace(ext))
 	}
-	if len(extFile) > 0 {
-		allexts = append(allexts, *readExtensionsFromFile(extFile)...)
-	}
 	if len(sendmsgs) > 0 {
 		msgstosend = append(msgstosend, readCsvFile(sendmsgs)...)
 	} else {
 		msgstosend = append(msgstosend, defaultMsgText)
+	}
+	if len(monEvents) > 0 {
+		for _, x := range strings.Split(monEvents, ",") {
+			allEvents = append(allEvents, strings.TrimSpace(x))
+		}
+	} else {
+		allEvents = events
 	}
 	initScan(&targets, &allexts)
 }

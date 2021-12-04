@@ -23,7 +23,7 @@ type csvWriter struct {
 
 const letterRunes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func initWriter(fname string) (*csvWriter, error) {
+func initCSVWriter(fname string) (*csvWriter, error) {
 	csvf, err := os.Create(fname)
 	if err != nil {
 		return nil, err
@@ -171,18 +171,116 @@ func checkAlive(targets *[]string) map[string]bool {
 	return dmap
 }
 
+func postProcess(obj *[]fResult) *[]fResult {
+	var (
+		uniqhosts []string
+		xresult   fResult
+		count     = 0
+		newObj    = make([]fResult, 0)
+	)
+	for _, x := range *obj {
+		uniqhosts = append(uniqhosts, x.Host)
+	}
+	uniqhosts = *sortUnique(&uniqhosts)
+	for _, mhost := range uniqhosts {
+		xflag := false
+		for _, res := range *obj {
+			if res.Host == mhost {
+				if !xflag {
+					if count > 0 {
+						newObj = append(newObj, xresult)
+					}
+					xresult = res
+					xflag = true
+					continue
+				}
+				xresult.Details.CVE202137624.ExploitDetails = append(xresult.Details.
+					CVE202137624.ExploitDetails, res.Details.CVE202137624.ExploitDetails...)
+				xresult.Details.CVE202141157.ExploitDetails = append(xresult.Details.
+					CVE202141157.ExploitDetails, res.Details.CVE202141157.ExploitDetails...)
+				count++
+			}
+		}
+	}
+	newObj = append(newObj, xresult)
+	return &newObj
+}
+
 // writeToJSON writes the results of a scan to the specified directory
 func writeToJSON(obj *[]fResult) error {
-	log.Println("Writing results to destination directory...")
+	obj = postProcess(obj)
 	for _, res := range *obj {
-		xdata, err := json.MarshalIndent(res, "", "  ")
+		xdata, err := json.MarshalIndent(res, "", "    ")
 		if err != nil {
 			return err
 		}
 		if err = ioutil.WriteFile(path.Join(outdir,
-			fmt.Sprintf("%s-results.json", res.Host)), xdata, 0666); err != nil {
+			fmt.Sprintf("%s-report.json", res.Host)), xdata, 0644); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func writeToCSV(obj *[]fResult) error {
+	var (
+		isvuln    bool
+		uniqhosts []string
+		mext, cve string
+	)
+	for _, x := range *obj {
+		uniqhosts = append(uniqhosts, x.Host)
+	}
+	uniqhosts = *sortUnique(&uniqhosts)
+	for _, xhost := range uniqhosts {
+		xwriter, err := initCSVWriter(path.Join(outdir, fmt.Sprintf("%s-report.csv", xhost)))
+		if err != nil {
+			return err
+		}
+		xwriter.writeRow([]string{
+			"extension",
+			"host",
+			"cve",
+			"is_vulnerable",
+			"message",
+			"timestamp",
+		})
+		for _, res := range *obj {
+			if xhost == res.Host {
+				for _, msg := range res.Details.CVE202137624.ExploitDetails[0].SentMessages {
+					if len(res.Details.CVE202137624.ExploitDetails) > 0 {
+						mext = res.Details.CVE202137624.ExploitDetails[0].Extension
+						cve = "CVE-2021-37624"
+						isvuln = res.Details.CVE202137624.IsVulnerable
+					} else {
+						mext = res.Details.CVE202141157.ExploitDetails[0].Extension
+						cve = "CVE-2021-41157"
+						isvuln = res.Details.CVE202141157.IsVulnerable
+					}
+					xwriter.writeRow([]string{
+						mext,
+						xhost,
+						cve,
+						fmt.Sprint(isvuln),
+						msg.Message,
+						time.Time(msg.Timestamp).Format(time.RFC3339),
+					})
+				}
+			}
+		}
+		xwriter.FlushBuffer()
+	}
+	return nil
+}
+
+func sortUnique(sSlice *[]string) *[]string {
+	var keys = make(map[string]bool)
+	var list []string
+	for _, entry := range *sSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return &list
 }
