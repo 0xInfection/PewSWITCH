@@ -70,6 +70,9 @@ To specify extensions, you can choose either of the methods:
     ```groovy
     ./pewswitch -ext-file extensions.txt
     ```
+
+Note that if any port is not specified with the host, port 5060 will be used by default as the destination port.
+
 ### Output
 The tool can output in 2 different formats, namely JSON and CSV. The default output format is JSON. Output format can be changed using the `-out-format` switch.
 
