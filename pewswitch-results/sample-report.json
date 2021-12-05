@@ -1,0 +1,66 @@
+{
+    "host": "192.168.0.108",
+    "vulnerability_details": {
+        "cve_2021_37624": {
+            "is_vulnerable": true,
+            "exploit_details": [
+                {
+                    "extension": "1005",
+                    "sent_messages": [
+                        {
+                            "message": "FBI here. Open your door!",
+                            "timestamp": "2021-12-05T20:00:27+05:30"
+                        }
+                    ],
+                    "sent_successfully": true
+                }
+            ]
+        },
+        "cve_2021_41157": {
+            "is_vulnerable": true,
+            "exploit_details": [
+                {
+                    "extension": "1005",
+                    "notifications_received": [
+                        {
+                            "timestamp": "2021-12-05T20:00:28+05:30",
+                            "notification": "\u003c?xml version=\"1.0\"?\u003e\n\u003cdialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"0\" state=\"full\" entity=\"sip:1005@192.168.0.108\"\u003e\n\u003c/dialog-info\u003e"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:28+05:30",
+                            "notification": "\u003c?xml version=\"1.0\"?\u003e\n\u003cdialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"1\" state=\"full\" entity=\"sip:1005@192.168.0.108\"\u003e\n\u003c/dialog-info\u003e"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:28+05:30",
+                            "notification": "\u003c?xml version=\"1.0\" encoding=\"ISO-8859-1\"?\u003e \n\u003cpresence xmlns='urn:ietf:params:xml:ns:pidf' \nxmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' \nxmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' \nxmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='sip:1005@192.168.0.108'\u003e\n \u003ctuple id='t6a5ed77e'\u003e\n  \u003cstatus\u003e\r\n   \u003cbasic\u003eclosed\u003c/basic\u003e\n  \u003c/status\u003e\n \u003c/tuple\u003e\n \u003cdm:person id='p06360c4a'\u003e\n  \u003cdm:note\u003eUnregistered\u003c/dm:note\u003e\n \u003c/dm:person\u003e\n\u003c/presence\u003e"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:28+05:30",
+                            "notification": "Messages-Waiting: no\r\nMessage-Account: sip:1005@192.168.0.108"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:29+05:30",
+                            "notification": "\u003c?xml version=\"1.0\"?\u003e\n\u003cdialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"0\" state=\"full\" entity=\"sip:1005@192.168.0.108\"\u003e\n\u003c/dialog-info\u003e"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:29+05:30",
+                            "notification": "\u003c?xml version=\"1.0\"?\u003e\n\u003cdialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"1\" state=\"full\" entity=\"sip:1005@192.168.0.108\"\u003e\n\u003c/dialog-info\u003e"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:29+05:30",
+                            "notification": "\u003c?xml version=\"1.0\" encoding=\"ISO-8859-1\"?\u003e \n\u003cpresence xmlns='urn:ietf:params:xml:ns:pidf' \nxmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' \nxmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' \nxmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='sip:1005@192.168.0.108'\u003e\n \u003ctuple id='t6a5ed77e'\u003e\n  \u003cstatus\u003e\r\n   \u003cbasic\u003eclosed\u003c/basic\u003e\n  \u003c/status\u003e\n \u003c/tuple\u003e\n \u003cdm:person id='p06360c4a'\u003e\n  \u003cdm:note\u003eUnregistered\u003c/dm:note\u003e\n \u003c/dm:person\u003e\n\u003c/presence\u003e"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:29+05:30",
+                            "notification": "Messages-Waiting: no\r\nMessage-Account: sip:1005@192.168.0.108"
+                        },
+                        {
+                            "timestamp": "2021-12-05T20:00:31+05:30",
+                            "notification": "\u003c?xml version=\"1.0\"?\u003e\n\u003cdialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"0\" state=\"full\" entity=\"sip:1005@192.168.0.108\"\u003e\n\u003c/dialog-info\u003e"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
