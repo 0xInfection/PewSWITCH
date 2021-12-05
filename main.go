@@ -28,7 +28,6 @@ func initScan(allhosts, allexts *[]string) {
 	xmap := checkAlive(allhosts)
 	for target, alive := range xmap {
 		if alive {
-			log.Println("Good host:", target)
 			alivehosts = append(alivehosts, target)
 		} else {
 			log.Fatalf("Looks like '%s' is down / not responding to SIP.", target)
@@ -123,7 +122,7 @@ func main() {
 	flag.Parse()
 	fmt.Print(lackofart, "\n\n")
 	targets := flag.Args()
-	if (len(targets) < 1 && len(extensions) < 1) && (len(extFile) < 1) {
+	if (len(targets) < 1 || len(extensions) < 1) && len(extFile) < 1 {
 		log.Println("You need to supply at least a valid target & extension to scan!\n\nUsage:")
 		flag.PrintDefaults()
 		os.Exit(1)

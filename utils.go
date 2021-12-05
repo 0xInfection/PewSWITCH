@@ -158,14 +158,25 @@ func checkAlive(targets *[]string) map[string]bool {
 		if err != nil {
 			continue
 		}
-		xbuf := make([]byte, 64)
+		xbuf := make([]byte, 8192)
 		_, err = conn.Read(xbuf)
 		if err != nil {
 			continue
 		}
 		if strings.HasPrefix(string(xbuf), "SIP/2.0") {
 			dmap[targ] = true
-			log.Printf("Host %s is up.", targ)
+			log.Printf("Host %s is up and responding to SIP.", targ)
+		}
+		server := serverHead.FindAllSubmatch(xbuf, -1)
+		if server != nil {
+			servstr := strings.ToLower(string(server[0][1]))
+			if !strings.Contains(servstr, "freeswitch") {
+				log.Println("Heuristics indicate that the server might not be FreeSWITCH!")
+			} else {
+				log.Println("Heuristics indicate that the server is FreeSWITCH.")
+			}
+		} else {
+			log.Println("No server header found. Skipping heuristic checks...")
 		}
 	}
 	return dmap
