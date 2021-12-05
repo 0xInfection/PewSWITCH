@@ -81,6 +81,8 @@ Example:
 ./pewswitch -exts 1000 -out-format csv freeserver.voip.com 
 ```
 
+You can find samples of reports in [`json`](pewswitch-results/sample-report.json) as well as [`csv`](pewswitch-results/sample-report.csv) format in the `./pewswitch-results/` directory.
+
 The destination output directory can be changed using the `-out-dir` argument. By default the output directory is `./pewswitch-results/` which is created in the current working directory while running the tool.
 
 Example:
@@ -141,3 +143,10 @@ You can make use of the pre-built binaries from the [Releases](https://github.co
 The tool is available under MIT License. Feel free to do whatever you want to do with it. :)
 
 Currently, PewSWITCH is at v0.1.
+
+### Bugs and features requests
+New requests and features? Feel free to create an [issue](https://github.com/0xInfection/pewswitch/issues/new/) or a [pull request](https://github.com/0xInfection/pewswitch/pulls).
+
+If you have anything to discuss you can reach out to me via twitter/email on my profile.
+
+> Created with ♡ by [Pinaki](https://twitter.com/0xInfection).
