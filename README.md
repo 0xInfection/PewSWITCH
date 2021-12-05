@@ -1,5 +1,5 @@
 # PewSWITCH
-A scanning and exploitation toolkit for CVE-2021-37624 and CVE-2021-41157 in FreeSWITCH.
+A FreeSWITCH specific scanning and exploitation toolkit for CVE-2021-37624 and CVE-2021-41157.
 
 > Related blog: https://0xinfection.github.io/posts/analyzing-freeswitch-vulns/
 
