@@ -40,7 +40,7 @@ Usage of ./pewswitch:
         Custom user-agent string to use. (default "pewswitch/0.1")
 ```
 
-#### Scanning for a specific vulnerability
+### Scanning for a specific vulnerability
 By default the tool scans for both vulnerabilites. If you want to test for a specific vulnerability, you can use the `-cve` flag to test for a specific vulnerability.
 
 Example:
@@ -48,7 +48,7 @@ Example:
 ./pewswitch -cve 'cve-2021-37624' -exts 1000 freeserver.voip.com
 ```
 
-#### Specifying extensions
+### Specifying extensions
 To specify extensions, you can choose either of the methods:
 - Specify a comma separated list of extensions via the `-exts` argument.
 
@@ -56,9 +56,9 @@ To specify extensions, you can choose either of the methods:
     ```powershell
     ./pewswitch -exts 1000,1001 freeserver.voip.com freeserver1.voip.com:5060
     ```
-    > This will make the tool to test for combinations of pairs for each extension with every host. So the end targets that will be tested in the above command are: `1000@freeserver.voip.com`, `1001@freeserver.voip.com`, `1000@freeserver1.voip.com:5060` and `1001@freeserver1.voip.com:5060`.
+    This will make the tool to test for combinations of pairs for each extension with every host. So the end targets that will be tested in the above command are: `1000@freeserver.voip.com`, `1001@freeserver.voip.com`, `1000@freeserver1.voip.com:5060` and `1001@freeserver1.voip.com:5060`.
 
-- Specify a file containing extensions. Note that when using a file, you need to specify both user and host. This is especially useful when you have to test specific extensions on specific servers. An example of such a file (e.g. `extensions.txt`) could look like this:
+- Specify a file containing extensions. Note that when using a file, you need to specify both user and host. This is especially useful when you have to test specific extensions on specific servers. An example of such a file (e.g. [`extensions-sample.txt`](extensions-sample.txt)) could look like this:
     ```
     1000@freeserver.voip.com
     1001@freeserver1.voip.com:5060
@@ -68,7 +68,7 @@ To specify extensions, you can choose either of the methods:
 
     Example:
     ```groovy
-    ./pewswitch -ext-file extensions.txt
+    ./pewswitch -ext-file extensions-sample.txt
     ```
 
 Note that if any port is not specified with the host, port 5060 will be used by default as the destination port.
@@ -85,16 +85,16 @@ The destination output directory can be changed using the `-out-dir` argument. B
 
 Example:
 ```groovy
-./pewswitch -ext-file extensions.txt -out-dir /tmp
+./pewswitch -ext-file extensions-sample.txt -out-dir /tmp
 ```
 
 ### Request Specific Settings
-There are some additional vulnerability/message specific settings in the tool that allows customization of requests during exploitation.
+There are some additional packet specific settings in the tool that allows customization of requests during vulnerability validation/exploitation.
 
-#### MESSAGE requests
+#### MESSAGE packets
 If a server is found _vulnerable_ to CVE-2021-37624, by default a sample message from name `FBI` and number `022-324-3000` is sent to the target extension. The contents of the message looks like this: `FBI here. Open your door!`
 
-This behaviour can be changed by making use of the `-msg-file` argument. This accepts a CSV file containing the name of the sender, the phone number and lastly the message contents to be sent. An example of such a file is [messages-sample.csv](messages-sample.csv).
+This behaviour can be changed by making use of the `-msg-file` argument. This accepts a CSV file containing the name of the sender, the phone number and lastly the message contents to be sent. An example of such a file is [`messages-sample.csv`](messages-sample.csv).
 ```
 sender_name,sender_phone,message
 FBI,022-324-3000,FBI here. Open your door!
@@ -107,11 +107,11 @@ Example:
 ```
 
 #### SUBSCRIBE requests
-By default, the tool sends SUBSCRIBE requests with a `Expires` header set at 60 seconds. It is for the same time-frame, that the tool will continue to listen for NOTIFY messages from the server. The value can be changed by making use of the `-expires` flag. 
+By default, the tool sends SUBSCRIBE requests with a `Expires` header set at 60 seconds. It is for the same time-frame the tool will continue to listen for NOTIFY messages from the server. The value can be changed by making use of the `-expires` flag. 
 
 Example:
 ```groovy
-./pewswitch -expires 600 -ext-file extensions.txt
+./pewswitch -expires 600 -ext-file extensions-sample.txt
 ```
 
 The tool also monitors for NOTIFY messages by subscribing to *__all__* events. A list of all events is below:
@@ -135,7 +135,7 @@ This behaviour can be changed by the `-events` flag which takes a comma separate
 ```
 
 ### Setup
-You can make use of the pre-built binaries from the [Releases](https://github.com/0xInfection/PewSWITCH/releases) section. Or, if you prefer to compile the code yourself, you'll need Go > 1.15. To build the tool, you can run `go build` which will give you a binary to run.
+You can make use of the pre-built binaries from the [Releases](https://github.com/0xInfection/PewSWITCH/releases) section. Or, if you prefer to compile the code yourself, you'll need Go > 1.13. To build the tool, you can run `go build` which will give you a binary to run.
 
 ### Version and License
 The tool is available under MIT License. Feel free to do whatever you want to do with it. :)

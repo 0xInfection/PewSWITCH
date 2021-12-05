@@ -223,11 +223,7 @@ func writeToJSON(obj *[]fResult) error {
 }
 
 func writeToCSV(obj *[]fResult) error {
-	var (
-		isvuln    bool
-		uniqhosts []string
-		mext, cve string
-	)
+	var uniqhosts []string
 	for _, x := range *obj {
 		uniqhosts = append(uniqhosts, x.Host)
 	}
@@ -247,24 +243,32 @@ func writeToCSV(obj *[]fResult) error {
 		})
 		for _, res := range *obj {
 			if xhost == res.Host {
-				for _, msg := range res.Details.CVE202137624.ExploitDetails[0].SentMessages {
-					if len(res.Details.CVE202137624.ExploitDetails) > 0 {
-						mext = res.Details.CVE202137624.ExploitDetails[0].Extension
-						cve = "CVE-2021-37624"
-						isvuln = res.Details.CVE202137624.IsVulnerable
-					} else {
-						mext = res.Details.CVE202141157.ExploitDetails[0].Extension
-						cve = "CVE-2021-41157"
-						isvuln = res.Details.CVE202141157.IsVulnerable
+				xdets := res.Details.CVE202137624.ExploitDetails
+				if len(res.Details.CVE202137624.ExploitDetails) > 0 {
+					for _, msg := range res.Details.CVE202137624.ExploitDetails[0].SentMessages {
+						xwriter.writeRow([]string{
+							xdets[0].Extension,
+							xhost,
+							"CVE-2021-37624",
+							fmt.Sprint(res.Details.CVE202137624.IsVulnerable),
+							msg.Message,
+							time.Time(msg.Timestamp).Format(time.RFC3339),
+						})
 					}
-					xwriter.writeRow([]string{
-						mext,
-						xhost,
-						cve,
-						fmt.Sprint(isvuln),
-						msg.Message,
-						time.Time(msg.Timestamp).Format(time.RFC3339),
-					})
+				}
+				xdetx := res.Details.CVE202141157.ExploitDetails
+				if len(res.Details.CVE202141157.ExploitDetails) > 0 {
+					for _, msg := range res.Details.CVE202141157.ExploitDetails[0].NotifsRecvd {
+						xwriter.writeRow([]string{
+							xdetx[0].Extension,
+							xhost,
+							"CVE-2021-41157",
+							fmt.Sprint(res.Details.CVE202137624.IsVulnerable),
+							// santizing the CSV so it doesn't span across lines
+							sanitiseRex.ReplaceAllLiteralString(msg.Message, "\\n"),
+							time.Time(msg.Timestamp).Format(time.RFC3339),
+						})
+					}
 				}
 			}
 		}

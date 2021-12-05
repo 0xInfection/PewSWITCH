@@ -1,5 +1,3 @@
-// Exploit for
-
 package main
 
 import (
@@ -42,7 +40,7 @@ func initScan(allhosts, allexts *[]string) {
 	maxProcs.Add(maxConcurrent)
 
 	cwd, _ := os.Getwd()
-	log.Printf("Creating output directory %s under %s...", outdir, cwd)
+	log.Printf("Using output directory %s under %s...", outdir, cwd)
 	_, err := os.Stat(outdir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -76,6 +74,7 @@ func initScan(allhosts, allexts *[]string) {
 		}
 	} else {
 		for _, host := range *readExtensionsFromFile(extFile) {
+			*allhosts = append(*allhosts, host)
 			if !strings.Contains(host, ":") {
 				host = fmt.Sprintf("%s:5060", host)
 			}
@@ -124,7 +123,7 @@ func main() {
 	flag.Parse()
 	fmt.Print(lackofart, "\n\n")
 	targets := flag.Args()
-	if (len(targets) < 1 && len(extensions) < 1) || (len(extFile) < 1) {
+	if (len(targets) < 1 && len(extensions) < 1) && (len(extFile) < 1) {
 		log.Println("You need to supply at least a valid target & extension to scan!\n\nUsage:")
 		flag.PrintDefaults()
 		os.Exit(1)
